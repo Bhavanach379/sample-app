@@ -1,37 +1,36 @@
-/**
- * Copyright 2023 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package main
 
 import (
-	"image"
-	"image/color"
-	"image/draw"
-	"image/png"
-	"net/http"
+    "fmt"
+    "log"
+    "net/http"
+    "os"
 )
 
 func main() {
-	http.HandleFunc("/blue", blueHandler)
-	http.ListenAndServe(":8080", nil)
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
+
+    http.HandleFunc("/", redHandler)
+
+    log.Printf("Listening on port %s", port)
+    if err := http.ListenAndServe(":"+port, nil); err != nil {
+        log.Fatal(err)
+    }
 }
 
-func blueHandler(w http.ResponseWriter, r *http.Request) {
-	img := image.NewRGBA(image.Rect(0, 0, 100, 100))
-	draw.Draw(img, img.Bounds(), &image.Uniform{color.RGBA{0, 0, 255, 255}}, image.ZP, draw.Src)
-	w.Header().Set("Content-Type", "image/png")
-	png.Encode(w, img)
+func redHandler(w http.ResponseWriter, r *http.Request) {
+    hostname, err := os.Hostname()
+    if err != nil {
+        hostname = "unknown"
+    }
+    html := fmt.Sprintf(`<html>
+<body style="background-color:red">
+<h1>Welcome to GKE! Version 2.0</h1>
+<p>Hostname: %s</p>
+</body>
+</html>`, hostname)
+    fmt.Fprint(w, html)
 }
